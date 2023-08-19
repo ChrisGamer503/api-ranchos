@@ -13,38 +13,39 @@ model rancho {
   nombre_rancho          String    @db.VarChar(50)
   descripcion            String    @db.VarChar(255)
   direccion              String    @db.VarChar(255)
-  precio_por_noche       Float     @db.Float
+  precio_por_noche       Float
   cantidad_huesped       Int
-  verificado             Boolean   @db.Bit(1) @default(false)
-  usuario                usuario   @relation(fields: [id_usuario_propietario], references: [id], onDelete: Cascade, map: "fk_rancho_usuario_propietario")
+  verificado             Boolean   @default(false)
+  usuario                usuario   @relation(fields: [id_usuario_propietario], references: [id], onDelete: Cascade)
   reserva                reserva[]
 
-  @@index([id_usuario_propietario], map: "fk_rancho_usuario_propietario")
+  @@index([id_usuario_propietario], name: "fk_rancho_usuario_propietario")
 }
 
 model reserva {
   id           Int      @id @default(autoincrement())
   id_usuario   Int
   id_rancho    Int
-  fecha_inicio DateTime @db.Date
-  fecha_fin    DateTime @db.Date
-  precio_total Float    @db.Float
+  fecha_inicio DateTime
+  fecha_fin    DateTime
+  precio_total Float
   cantidad_huesped       Int
 
-  rancho       rancho   @relation(fields: [id_rancho], references: [id], onDelete: Cascade, map: "fk_reserva_rancho")
-  usuario      usuario  @relation(fields: [id_usuario], references: [id], onDelete: Cascade, map: "fk_reserva_usuario")
+  rancho       rancho   @relation(fields: [id_rancho], references: [id], onDelete: Cascade)
+  usuario      usuario  @relation(fields: [id_usuario], references: [id], onDelete: Cascade)
 
-  @@index([id_rancho], map: "fk_reserva_rancho")
-  @@index([id_usuario], map: "fk_reserva_usuario")
+  @@index([id_rancho], name: "fk_reserva_rancho")
+  @@index([id_usuario], name: "fk_reserva_usuario")
 }
 
 model usuario {
   id       Int       @id @default(autoincrement())
-  nombre   String    @db.VarChar(50)
-  apellido String    @db.VarChar(50)
-  password String    @db.VarChar(50)
-  email    String    @db.VarChar(50)
-  rol      String    @db.VarChar(50) @default("usuario")
+  nombre   String
+  apellido String
+  password String
+  email    String
+  rol      String   @default("usuario")
   rancho   rancho[]
   reserva  reserva[]
 }
+
