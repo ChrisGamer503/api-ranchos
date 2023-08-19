@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { crearUsuario, iniciarSesion } from "../controllers/usuarioControlador.js";
+import { crearUsuario, iniciarSesion, perfil } from "../controllers/usuarioControlador.js";
 import { verificarMiddleware } from "../middleware/autentificacionUsuario.js";
 
 
