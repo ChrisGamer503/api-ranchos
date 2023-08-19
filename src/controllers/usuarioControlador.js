@@ -75,7 +75,12 @@ const iniciarSesion = async (req, res) => {
 
 }
 
+const perfil = async(req,res)=>{
+    return res.status(200).json(req.usuario);
+}
+
 export {
     crearUsuario,
-    iniciarSesion
+    iniciarSesion,
+    perfil
 }
