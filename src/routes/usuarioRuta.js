@@ -7,6 +7,7 @@ const router = Router()
 
 router.post("/register", crearUsuario)
 router.post("/login", iniciarSesion)
+router.get("/perfil", verificarMiddleware, perfil)
 
 function prueba(req, res) {
     console.log("Si funca")
