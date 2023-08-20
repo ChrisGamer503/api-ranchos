@@ -139,21 +139,23 @@ const eliminarReserva = async(req,res) => {
 const verificarRancho = async (req, res) => {
   try {
     const { id } = req.params;
-    await prisma.$queryRaw`
-          UPDATE rancho 
-          SET verificado = CASE
-          WHEN verificado = TRUE THEN FALSE
-          ELSE TRUE
-          END
-          WHERE id = ${id}`;
+    const rancho = await prisma.rancho.findUnique({ where: { id } });
 
-    return res.status(200).json({ message: "Se cambio el verificado !" });
+    if (!rancho) {
+      return res.status(404).json({ message: "Rancho no encontrado" });
+    }
+
+    await prisma.rancho.update({
+      where: { id },
+      data: { verificado: !rancho.verificado }, // Cambia el valor booleano
+    });
+
+    return res.status(200).json({ message: "Se cambió el estado de verificado." });
   } catch (error) {
-    console.log(error);
-    return res.status(400).send("ERROR");
+    console.error(error);
+    return res.status(500).send("Error interno del servidor");
   }
 };
-
 export {
     crearReserva,
     leerReservas,
