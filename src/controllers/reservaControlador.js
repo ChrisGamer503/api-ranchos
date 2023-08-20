@@ -139,9 +139,13 @@ const eliminarReserva = async(req,res) => {
 const verificarRancho = async (req, res) => {
   try {
     const { id } = req.params;
-
-    await prisma.$queryRaw`UPDATE rancho 
-        SET verificado = IF(verificado=1,0,1) WHERE id = ${id}`;
+    await prisma.$queryRaw`
+          UPDATE rancho 
+          SET verificado = CASE
+          WHEN verificado = TRUE THEN FALSE
+          ELSE TRUE
+          END
+          WHERE id = ${id}`;
 
     return res.status(200).json({ message: "Se cambio el verificado !" });
   } catch (error) {
