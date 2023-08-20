@@ -138,7 +138,11 @@ const eliminarReserva = async(req,res) => {
 
 const verificarRancho = async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = parseInt(req.params.id); // Convierte a entero
+    if (isNaN(id)) {
+      return res.status(400).json({ message: "ID inválido" });
+    }
+
     const rancho = await prisma.rancho.findUnique({ where: { id } });
 
     if (!rancho) {
@@ -147,7 +151,7 @@ const verificarRancho = async (req, res) => {
 
     await prisma.rancho.update({
       where: { id },
-      data: { verificado: !rancho.verificado }, // Cambia el valor booleano
+      data: { verificado: !rancho.verificado },
     });
 
     return res.status(200).json({ message: "Se cambió el estado de verificado." });
