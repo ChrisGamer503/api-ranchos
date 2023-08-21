@@ -17,6 +17,6 @@ router.get("/:id", verificarMiddleware, individualReserva)
 router.patch("/:id", verificarMiddleware, adminMiddleware, editarReserva)
 
 //Eliminar
-router.delete("/:id", verificarMiddleware, adminMiddleware, eliminarReserva)
+router.delete("/:id", verificarMiddleware, eliminarReserva)
 
 export default router
