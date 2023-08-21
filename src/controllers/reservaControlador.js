@@ -61,16 +61,14 @@ const crearReserva = async (req, res) => {
 };
 
 //Leer
-const leerReservas = async (req,res) => {
-    try {
-     
-        const reservaLeida = await prisma.reserva.findMany()
-        return res.status(200).json(reservaLeida)
-    
-        } catch (error) {
-            return res.status(400).json({message: "ERROR"})    
-        }
-}
+const leerReservas = async (req, res) => {
+  try {
+    const reservaLeida = await prisma.reserva.findMany({where: {id_usuario: req.usuario.id}, include: {rancho: true}});
+    return res.status(200).json(reservaLeida);
+  } catch (error) {
+    return res.status(400).json({ message: "ERROR" });
+  }
+};
 
 //Leer individual
 const individualReserva = async (req,res) =>{
@@ -87,51 +85,66 @@ const individualReserva = async (req,res) =>{
 }
 
 //Editar
-const editarReserva = async(req,res) =>{
-    const reservaEsquema = z.object({
-        fecha_inicio: z.date().or(z.string()),
-        fecha_fin: z.date().or(z.string()),
-        cantidad_huesped: z.string().transform(Number)
-    })
+const editarReserva = async (req, res) => {
+  const reservaEsquema = z.object({
+    fecha_inicio: z.date().or(z.string()),
+    fecha_fin: z.date().or(z.string()),
+    cantidad_huesped: z.string().transform(Number),
+  });
 
-    
-    //Obtener datos
-    const datos = req.body
+  // Obtener datos
+  const datos = req.body;
 
-    try {
-        
-        //Validar
-        reservaEsquema.parse(datos)
-        datos.id_usuario = req.usuario.id
-        datos.id_rancho = parseInt(req.params.id)
-        datos.cantidad_huesped = parseInt(datos.cantidad_huesped)
-        datos.fecha_inicio = new Date(datos.fecha_inicio)
-        datos.fecha_fin = new Date(datos.fecha_fin)
+  try {
+    // Validar
+    reservaEsquema.parse(datos);
+    datos.id_usuario = req.usuario.id;
+    datos.id_rancho = parseInt(req.params.id);
+    datos.cantidad_huesped = parseInt(datos.cantidad_huesped);
+    datos.fecha_inicio = new Date(datos.fecha_inicio);
+    datos.fecha_fin = new Date(datos.fecha_fin);
 
-        let {id} = req.params
-        id = parseInt(id)
+    let { id } = req.params;
+    id = parseInt(id);
 
-        const [precioTotal] = await prisma.$queryRaw`SELECT DATEDIFF(${datos.fecha_fin}, ${datos.fecha_inicio}) * precio_por_noche as precioFinal FROM rancho WHERE id = 1`
-        datos.precio_total = precioTotal.precioFinal
+    // Calcular precio total
+    const fechaInicio = datos.fecha_inicio.toISOString().split('T')[0];
+    const fechaFin = datos.fecha_fin.toISOString().split('T')[0];
+    const [precioTotal] = await prisma.$queryRaw`
+      SELECT DATEDIFF(${fechaFin}, ${fechaInicio}) * precio_por_noche as precioFinal
+      FROM rancho
+      WHERE id = ${datos.id_rancho}
+    `;
+    datos.precio_total = precioTotal.precioFinal;
 
-        const [validacionReserva] = await prisma.$queryRaw`SELECT * FROM reserva WHERE (${datos.fecha_inicio} BETWEEN fecha_inicio AND fecha_fin) OR 
-        (${datos.fecha_fin} BETWEEN fecha_inicio AND fecha_fin)`
-        
+    // Verificar disponibilidad
+    const [validacionReserva] = await prisma.$queryRaw`
+      SELECT *
+      FROM reserva
+      WHERE
+        (${datos.fecha_inicio} BETWEEN fecha_inicio AND fecha_fin OR
+        ${datos.fecha_fin} BETWEEN fecha_inicio AND fecha_fin) AND
+        id_rancho = ${datos.id_rancho}
+    `;
 
-        if (validacionReserva) return res.status(400).json({message: "ERROR: FECHA OCUPADA"})
-        //Insertar
-        const reservaCreada = await prisma.reserva.update({where:{id}, data: datos})
-        return res.status(201).json(reservaCreada)
-
-        
-        
-
-    } catch (error) {
-        console.log(error)
-        return res.status(400).send("ERROR")
+    if (validacionReserva) {
+      return res.status(400).json({ message: 'ERROR: FECHA OCUPADA' });
     }
-}
 
+    // Actualizar reserva
+    const reservaCreada = await prisma.reserva.update({
+      where: { id },
+      data: datos,
+    });
+
+    return res.status(201).json(reservaCreada);
+  } catch (error) {
+    console.log(error);
+    return res.status(400).send('ERROR');
+  } finally {
+    await prisma.$disconnect(); // Cierra la conexión de Prisma al finalizar
+  }
+};
 //Eliminar
 const eliminarReserva = async(req,res) => {
     try {
